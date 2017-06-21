@@ -1,1 +1,4 @@
-build/
+/build/
+/dist/
+/src/docs/escolar.asta.lock
+/src/docs/escolar.mwb.bak
