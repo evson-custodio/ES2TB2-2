@@ -10,12 +10,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import util.Model;
 
 /**
  *
  * @author evson
  */
-public class Aluno {
+public class Aluno implements Model {
     private Integer id;
     private String nome;
     private String matricula;
@@ -68,8 +69,8 @@ public class Aluno {
             if (boletins == null) {
                 boletins = new HashMap<>();
             }
-            if (!boletins.containsKey(boletim.hashCode())) {
-                boletins.put(boletim.hashCode(), boletim);
+            if (!boletins.containsKey(boletim.getId())) {
+                boletins.put(boletim.getId(), boletim);
             }
         }
         catch (NullPointerException ex) {
@@ -80,12 +81,32 @@ public class Aluno {
     public void removeBoletim(Boletim boletim) {
         try {
             if (boletins != null) {
-                boletins.remove(boletim.hashCode());
+                boletins.remove(boletim.getId());
             }
         }
         catch (NullPointerException ex) {
             Logger.getLogger(Aluno.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    public Double getMediaPessoal() {
+        int count = 0;
+        Double mediaPessoal = 0.0, media;
+        
+        if (boletins == null || boletins.isEmpty()) {
+            return null;
+        }
+        else {
+            for (Boletim boletim : boletins.values()) {
+                media = boletim.getMedia();
+                if (media != null) {
+                    mediaPessoal += media;
+                    count++;
+                }
+            }
+        }
+        
+        return (count != 0) ? (mediaPessoal / count) : null;
     }
     
     @Override
@@ -108,5 +129,10 @@ public class Aluno {
         }
         final Aluno other = (Aluno) obj;
         return Objects.equals(this.id, other.id);
+    }
+
+    @Override
+    public String toString() {
+        return "ID: " + id + "| Nome: " + nome + " | Matrícula: " + matricula;
     }
 }

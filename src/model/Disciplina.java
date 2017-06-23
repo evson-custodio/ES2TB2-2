@@ -10,12 +10,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import util.Model;
 
 /**
  *
  * @author evson
  */
-public class Disciplina {
+public class Disciplina implements Model {
     private Integer id;
     private String nome;
     private Map<Integer, Boletim> boletins;
@@ -59,7 +60,7 @@ public class Disciplina {
                 boletins = new HashMap<>();
             }
             if (!boletins.containsKey(boletim.hashCode())) {
-                boletins.put(boletim.hashCode(), boletim);
+                boletins.put(boletim.getId(), boletim);
             }
         }
         catch (NullPointerException ex) {
@@ -70,12 +71,32 @@ public class Disciplina {
     public void removeBoletim(Boletim boletim) {
         try {
             if (boletins != null) {
-                boletins.remove(boletim.hashCode());
+                boletins.remove(boletim.getId());
             }
         }
         catch (NullPointerException ex) {
             Logger.getLogger(Disciplina.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    public Double getMediaTurma() {
+        int count = 0;
+        Double mediaTurma = 0.0, media;
+        
+        if (boletins == null || boletins.isEmpty()) {
+            return null;
+        }
+        else {
+            for (Boletim boletim : boletins.values()) {
+                media = boletim.getMedia();
+                if (media != null) {
+                    mediaTurma += media;
+                    count++;
+                }
+            }
+        }
+        
+        return (count != 0) ? (mediaTurma / count) : null;
     }
 
     @Override
@@ -98,5 +119,10 @@ public class Disciplina {
         }
         final Disciplina other = (Disciplina) obj;
         return Objects.equals(this.id, other.id);
+    }
+    
+    @Override
+    public String toString() {
+        return "ID: " + id + "| Nome: " + nome;
     }
 }
