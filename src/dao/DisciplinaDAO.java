@@ -182,6 +182,7 @@ public final class DisciplinaDAO implements CRUD<Integer, Disciplina> {
             statement.executeUpdate();
             
             DISCIPLINAS.clear();
+            BoletimDAO.getInstance().delete();
 
             statement.close();
 
@@ -215,6 +216,7 @@ public final class DisciplinaDAO implements CRUD<Integer, Disciplina> {
 
             statement.executeUpdate();
             
+            BoletimDAO.getInstance().delete(disciplina);
             DISCIPLINAS.remove(disciplina.getId());
 
             statement.close();

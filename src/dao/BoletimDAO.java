@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -49,11 +50,35 @@ public final class BoletimDAO implements CRUD<Integer, Boletim> {
             
             CONNECTION.setAutoCommit(false);
             PreparedStatement statement = CONNECTION.prepareStatement(BoletimSQL.CREATE, PreparedStatement.RETURN_GENERATED_KEYS);
-
-            statement.setDouble(1, boletim.getTesteB1());
-            statement.setDouble(2, boletim.getProvaB1());
-            statement.setDouble(3, boletim.getTesteB2());
-            statement.setDouble(4, boletim.getProvaB2());
+            
+            if (boletim.getTesteB1() != null) {
+                statement.setDouble(1, boletim.getTesteB1());
+            }
+            else {
+                statement.setNull(1, Types.DOUBLE);
+            }
+            
+            if (boletim.getProvaB1() != null) {
+                statement.setDouble(2, boletim.getProvaB1());
+            }
+            else {
+                statement.setNull(2, Types.DOUBLE);
+            }
+            
+            if (boletim.getTesteB2() != null) {
+                statement.setDouble(3, boletim.getTesteB2());
+            }
+            else {
+                statement.setNull(3, Types.DOUBLE);
+            }
+            
+            if (boletim.getProvaB2() != null) {
+                statement.setDouble(4, boletim.getProvaB2());
+            }
+            else {
+                statement.setNull(4, Types.DOUBLE);
+            }
+            
             statement.setInt(5, boletim.getAluno().getId());
             statement.setInt(6, boletim.getDisciplina().getId());
 
@@ -88,6 +113,8 @@ public final class BoletimDAO implements CRUD<Integer, Boletim> {
     @Override
     public Boletim get(Model model) {
         Boletim boletim = null;
+        Aluno aluno;
+        Disciplina disciplina;
         
         try {
             boletim = BOLETINS.get(((Boletim) model).getId());
@@ -106,6 +133,12 @@ public final class BoletimDAO implements CRUD<Integer, Boletim> {
                 boletim.setProvaB1(result.getDouble(3));
                 boletim.setTesteB2(result.getDouble(4));
                 boletim.setProvaB2(result.getDouble(5));
+                aluno = AlunoDAO.getInstance().get(new Aluno(result.getInt(6), null, null, null));
+                disciplina = DisciplinaDAO.getInstance().get(new Disciplina(result.getInt(7), null, null));
+                aluno.addBoletim(boletim);
+                disciplina.addBoletim(boletim);
+                boletim.setAluno(aluno);
+                boletim.setDisciplina(disciplina);
                 BOLETINS.put(boletim.getId(), boletim);
 
                 result.close();
@@ -138,8 +171,9 @@ public final class BoletimDAO implements CRUD<Integer, Boletim> {
             result = statement.executeQuery();
             
             result.next();
-            boletim = new Boletim(result.getInt(1), result.getDouble(2), result.getDouble(3), result.getDouble(4), result.getDouble(5), null, null);
-
+            boletim = new Boletim(result.getInt(1), result.getDouble(2), result.getDouble(3), result.getDouble(4), result.getDouble(5), aluno, disciplina);
+            aluno.addBoletim(boletim);
+            disciplina.addBoletim(boletim);
             BOLETINS.put(boletim.getId(), boletim);
 
             result.close();
@@ -160,11 +194,17 @@ public final class BoletimDAO implements CRUD<Integer, Boletim> {
             PreparedStatement statement = CONNECTION.prepareStatement(BoletimSQL.QUERY);
             ResultSet result = statement.executeQuery();
             Boletim boletim;
+            Aluno aluno;
+            Disciplina disciplina;
 
             while(result.next()) {
                 boletim = BOLETINS.get(result.getInt(1));
                 if (boletim == null) {
-                    boletim = new Boletim(result.getInt(1), result.getDouble(2), result.getDouble(3), result.getDouble(4), result.getDouble(5), null, null);
+                    aluno = AlunoDAO.getInstance().get(new Aluno(result.getInt(6), null, null, null));
+                    disciplina = DisciplinaDAO.getInstance().get(new Disciplina(result.getInt(7), null, null));
+                    boletim = new Boletim(result.getInt(1), (Double)result.getObject(2), (Double)result.getObject(3), (Double)result.getObject(4), (Double)result.getObject(5), aluno, disciplina);
+                    aluno.addBoletim(boletim);
+                    disciplina.addBoletim(boletim);
                     BOLETINS.put(boletim.getId(), boletim);
                 }
                 boletins.put(boletim.getId(), boletim);
@@ -186,29 +226,53 @@ public final class BoletimDAO implements CRUD<Integer, Boletim> {
         try {
             PreparedStatement statement = null;
             Boletim boletim;
+            Aluno aluno;
+            Disciplina disciplina;
             
             if (model instanceof Aluno) {
+                aluno = (Aluno) model;
                 statement = CONNECTION.prepareStatement(BoletimSQL.QUERY_ID_ALUNO);
-                statement.setInt(1, ((Aluno) model).getId());
+                statement.setInt(1, aluno.getId());
+                
+                ResultSet result = statement.executeQuery();
+
+                while(result.next()) {
+                    boletim = BOLETINS.get(result.getInt(1));
+                    if (boletim == null) {
+                        disciplina = DisciplinaDAO.getInstance().get(new Disciplina(result.getInt(7), null, null));
+                        boletim = new Boletim(result.getInt(1), result.getDouble(2), result.getDouble(3), result.getDouble(4), result.getDouble(5), aluno, disciplina);
+                        aluno.addBoletim(boletim);
+                        disciplina.addBoletim(boletim);
+                        BOLETINS.put(boletim.getId(), boletim);
+                    }
+                    boletins.put(boletim.getId(), boletim);
+                }
+
+                result.close();
+                statement.close();
             }
             else if (model instanceof Disciplina) {
+                disciplina = (Disciplina) model;
                 statement = CONNECTION.prepareStatement(BoletimSQL.QUERY_ID_DISCIPLINA);
-                statement.setInt(1, ((Disciplina) model).getId());
-            }
-            
-            ResultSet result = statement.executeQuery();
+                statement.setInt(1, disciplina.getId());
+                
+                ResultSet result = statement.executeQuery();
 
-            while(result.next()) {
-                boletim = BOLETINS.get(result.getInt(1));
-                if (boletim == null) {
-                    boletim = new Boletim(result.getInt(1), result.getDouble(2), result.getDouble(3), result.getDouble(4), result.getDouble(5), null, null);
-                    BOLETINS.put(boletim.getId(), boletim);
+                while(result.next()) {
+                    boletim = BOLETINS.get(result.getInt(1));
+                    if (boletim == null) {
+                        aluno = AlunoDAO.getInstance().get(new Aluno(result.getInt(6), null, null, null));
+                        boletim = new Boletim(result.getInt(1), result.getDouble(2), result.getDouble(3), result.getDouble(4), result.getDouble(5), aluno, disciplina);
+                        aluno.addBoletim(boletim);
+                        disciplina.addBoletim(boletim);
+                        BOLETINS.put(boletim.getId(), boletim);
+                    }
+                    boletins.put(boletim.getId(), boletim);
                 }
-                boletins.put(boletim.getId(), boletim);
-            }
 
-            result.close();
-            statement.close();
+                result.close();
+                statement.close();
+            }
         }
         catch (ClassCastException | SQLException | NullPointerException ex) {
             Logger.getLogger(BoletimDAO.class.getName()).log(Level.SEVERE, null, ex);
@@ -262,6 +326,14 @@ public final class BoletimDAO implements CRUD<Integer, Boletim> {
 
             statement.executeUpdate();
             
+            for (Aluno aluno : AlunoDAO.getInstance().getAlunos().values()) {
+                aluno.getBoletins().clear();
+            }
+            
+            for (Disciplina disciplina : DisciplinaDAO.getInstance().getDisciplinas().values()) {
+                disciplina.getBoletins().clear();
+            }
+            
             BOLETINS.clear();
 
             statement.close();
@@ -297,6 +369,8 @@ public final class BoletimDAO implements CRUD<Integer, Boletim> {
                 
                 statement.executeUpdate();
                 
+                boletim.getAluno().removeBoletim(boletim);
+                boletim.getDisciplina().removeBoletim(boletim);                
                 BOLETINS.remove(boletim.getId());
                 
                 statement.close();
@@ -308,11 +382,11 @@ public final class BoletimDAO implements CRUD<Integer, Boletim> {
                 
                 statement.executeUpdate();
                 
-                for(Boletim boletim : BOLETINS.values()) {
-                    if (boletim.getAluno().equals(aluno)) {
-                        BOLETINS.remove(boletim.getId());
-                    }
+                for(Boletim boletim : aluno.getBoletins().values()) {
+                    boletim.getDisciplina().removeBoletim(boletim);
+                    BOLETINS.remove(boletim.getId());
                 }
+                aluno.getBoletins().clear();
                 
                 statement.close();
             }
@@ -323,11 +397,11 @@ public final class BoletimDAO implements CRUD<Integer, Boletim> {
                 
                 statement.executeUpdate();
                 
-                for(Boletim boletim : BOLETINS.values()) {
-                    if (boletim.getDisciplina().equals(disciplina)) {
-                        BOLETINS.remove(boletim.getId());
-                    }
+                for(Boletim boletim : disciplina.getBoletins().values()) {
+                    boletim.getAluno().removeBoletim(boletim);
+                    BOLETINS.remove(boletim.getId());
                 }
+                disciplina.getBoletins().clear();
                 
                 statement.close();
             }
@@ -360,8 +434,10 @@ public final class BoletimDAO implements CRUD<Integer, Boletim> {
 
             statement.executeUpdate();
             
-            for (Boletim boletim : BOLETINS.values()) {
-                if (boletim.getAluno().equals(aluno) && boletim.getDisciplina().equals(disciplina)) {
+            for (Boletim boletim : aluno.getBoletins().values()) {
+                if (boletim.getDisciplina().equals(disciplina)) {
+                    aluno.removeBoletim(boletim);
+                    disciplina.removeBoletim(boletim);
                     BOLETINS.remove(boletim.getId());
                     break;
                 }

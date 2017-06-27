@@ -186,6 +186,7 @@ public final class AlunoDAO implements CRUD<Integer, Aluno> {
             statement.executeUpdate();
             
             ALUNOS.clear();
+            BoletimDAO.getInstance().delete();
 
             statement.close();
 
@@ -219,6 +220,7 @@ public final class AlunoDAO implements CRUD<Integer, Aluno> {
 
             statement.executeUpdate();
             
+            BoletimDAO.getInstance().delete(aluno);
             ALUNOS.remove(aluno.getId());
 
             statement.close();

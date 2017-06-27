@@ -10,7 +10,7 @@ package dao.sql;
  * @author evson
  */
 public interface BoletimSQL {
-    public static final String CREATE                               = "insert into Boletim(idBoletim, testeB1, provaB1, testeB2, provaB2, Aluno_idAluno, Disciplina_idDisciplina) values(?, ?, ?, ?, ?, ?, ?);";
+    public static final String CREATE                               = "insert into Boletim(testeB1, provaB1, testeB2, provaB2, Aluno_idAluno, Disciplina_idDisciplina) values(?, ?, ?, ?, ?, ?);";
     public static final String GET                                  = "select * from Boletim where idBoletim = ?;";
     public static final String GET_ID_ALUNO_AND_ID_DISCIPLINA       = "select * from Boletim where Aluno_idAluno = ? and Disciplina_idDisciplina = ?;";
     public static final String QUERY                                = "select * from Boletim";
